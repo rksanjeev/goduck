@@ -4,7 +4,6 @@ import (
 	"context"
 	"database/sql"
 	"log"
-	"os"
 
 	_ "github.com/duckdb/duckdb-go/v2"
 )
@@ -30,7 +29,9 @@ func main() {
     LOAD httpfs;
     SET s3_region='us-east-1';
     SET s3_use_ssl=true;
+	SET s3_provider='credential_chain';
 	`)
+  
 	if err != nil {
 		log.Fatal("Error configuring S3: ", err)
 	}
@@ -41,16 +42,12 @@ func main() {
 		log.Fatal("Error enabling profiling: ", err)
 	}
 	_, err = conn.ExecContext(context.Background(), `PRAGMA profiling_mode = 'detailed'`)
-	if err != nil {
-		log.Fatal("Error setting profiling mode: ", err)
-	}
+if err != nil {
+	log.Fatal("Error setting profiling mode: ", err)
+}
 
-	err = os.MkdirAll(s3_prefix+"data/result", os.ModePerm)
-	if err != nil {
-		log.Fatal("Error creating directory: ", err)
-	}
-	// Corrected query with proper JOINs
-	query := `CREATE TABLE result_table AS
+// Corrected query with proper JOINs
+query := `CREATE TABLE result_table AS
 SELECT
     CAST(o.customer_id AS VARCHAR) AS customer_id,
     LIST(

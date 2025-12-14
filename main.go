@@ -25,6 +25,16 @@ func main() {
 	}
 	defer conn.Close()
 
+	_, err = conn.ExecContext(context.Background(), `
+    INSTALL httpfs;
+    LOAD httpfs;
+    SET s3_region='us-east-1';
+    SET s3_use_ssl=true;
+	`)
+	if err != nil {
+		log.Fatal("Error configuring S3: ", err)
+	}
+
 	// Enable profiling
 	_, err = conn.ExecContext(context.Background(), `PRAGMA enable_profiling`)
 	if err != nil {

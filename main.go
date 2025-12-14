@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"database/sql"
+	"fmt"
 	"log"
 	"os"
 
@@ -11,6 +12,7 @@ import (
 
 func main() {
 	var s3_prefix string = "s3://5b02238f-3466-44bc-8131-71576d473f97/"
+	fmt.Println("S3 Prefix: ", s3_prefix)
 	var tmpStoragePath string = "/tmp/duck/storage"
 
 	// Create temporary storage directory
@@ -42,9 +44,9 @@ func main() {
         PROVIDER credential_chain
     );
     SET temp_directory='`+tmpStoragePath+`';
-    SET max_temp_directory_size = '10GB';
+    SET max_temp_directory_size = '30GB';
     SET threads=4;
-    PRAGMA memory_limit='8GB';
+	SET memory_limit='16GB';
 	`)
 
 	if err != nil {
@@ -62,7 +64,7 @@ func main() {
 	}
 
 	// Corrected query with proper JOINs
-	query := `CREATE TABLE result_table AS
+	query := `EXPLAIN ANALYZE CREATE TABLE result_table AS
 			SELECT
 				CAST(o.customer_id AS VARCHAR) AS customer_id,
 				LIST(
@@ -73,15 +75,15 @@ func main() {
 						unit_price := oi.unit_price
 					)
 				) AS ordered
-			FROM '` + s3_prefix + `data/parquet/orders.parquet' o
-			JOIN '` + s3_prefix + `data/parquet/order_items.parquet' oi
+			FROM 'data/parquet/orders/orders.parquet' o
+			JOIN 'data/parquet/order_items/order_items.parquet' oi
 				ON o.order_id = oi.order_id
-			JOIN '` + s3_prefix + `data/parquet/products.parquet' p
+			JOIN 'data/parquet/products/products.parquet' p
 				ON oi.product_id = p.product_id
 			GROUP BY o.customer_id;
 
 			COPY result_table
-			TO '` + s3_prefix + `data/result/result.json'
+			TO 'data/result/result.json'
 			(ARRAY);
 			`
 

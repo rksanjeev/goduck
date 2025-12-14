@@ -28,6 +28,10 @@ func main() {
     INSTALL httpfs;
     LOAD httpfs;
     SET s3_region='us-east-1';
+    CREATE OR REPLACE SECRET secret (
+        TYPE s3,
+        PROVIDER credential_chain
+    );
 	`)
 
 	if err != nil {
